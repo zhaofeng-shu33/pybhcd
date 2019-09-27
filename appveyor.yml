@@ -6,6 +6,8 @@ environment:
   VCPKG_ROOT: C:\Tools\vcpkg
 install:
 - cmd: >-
+    git submodule update --init --recursive
+    
     COPY .\appveyor\x64-windows-bhcd.cmake C:\Tools\vcpkg\triplets\
     
     IF NOT EXIST "C:\Tools\vcpkg\installed\x64-windows\include\glib.h" vcpkg install glib:x64-windows-bhcd gsl:x64-windows-bhcd
