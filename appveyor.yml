@@ -3,6 +3,8 @@ image: Visual Studio 2019
 configuration: Release
 platform: x64
 environment:
+  TWINE_PASSWORD:
+    secure: cDgJ0l9hLc0cTXODMVfjnA==
   VCPKG_ROOT: C:\Tools\vcpkg
 install:
 - cmd: >-
@@ -23,3 +25,10 @@ build_script:
     C:\Python36-x64\python.exe -m pip wheel . -w dist --no-deps
     
     C:\Python37-x64\python.exe -m pip wheel . -w dist --no-deps
+deploy_script:
+- on:
+    branch: master
+    APPVEYOR_REPO_TAG: true
+  cmd: >-
+    
+    C:\Python36-x64\python.exe -m twine upload dist/* -u zhaofeng-shu33 || ver>nul
