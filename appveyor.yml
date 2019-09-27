@@ -26,9 +26,8 @@ build_script:
     
     C:\Python37-x64\python.exe -m pip wheel . -w dist --no-deps
 deploy_script:
-- on:
-    branch: master
-    APPVEYOR_REPO_TAG: true
-  cmd: >-
+- cmd: >-
     
-    C:\Python36-x64\python.exe -m twine upload dist/* -u zhaofeng-shu33 || ver>nul
+    echo %APPVEYOR_REPO_TAG%
+    
+    IF "%APPVEYOR_REPO_TAG%"=="true" C:\Python36-x64\python.exe -m twine upload dist/* -u zhaofeng-shu33
