@@ -36,6 +36,15 @@ def set_up_glib_include_path_linux(extra_include_path):
     glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib64', 'glib-2.0', 'include')
     extra_include_path.append(glib_platform_indepedent_include_path)
     extra_include_path.append(glib_platform_depedent_include_path)
+
+def set_up_glib_include_path_macos(extra_include_path):
+    GLIB_ROOT = os.environ.get('GLIB_ROOT', '/usr/local')
+    glib_platform_indepedent_include_path = os.path.join(GLIB_ROOT, 'include', 'glib-2.0')
+    glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib', 'glib-2.0', 'include')
+    extra_include_path.append(glib_platform_indepedent_include_path)
+    extra_include_path.append(glib_platform_depedent_include_path)
+
+
         	
 def set_up_cython_extension():
     global gsl_run_time_name
@@ -62,7 +71,8 @@ def set_up_cython_extension():
 
     if sys.platform == 'linux':
         set_up_glib_include_path_linux(extra_include_path)
-                
+    elif sys.platform == 'darwin':
+	    set_up_glib_include_path_macos(extra_include_path)
 
     # collect library
     sourcefiles = ['pybhcd.pyx']
@@ -70,13 +80,17 @@ def set_up_cython_extension():
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'hccd'), exclude=[]))
     extra_compile_flags_list = []
     extra_link_flags_list = [] 
-    extra_libraries = ['glib-2.0', 'gsl']   
+    extra_libraries = ['glib-2.0']   
     if sys.platform == 'win32' and os.environ.get('BHCD_DEBUG'): 
         extra_compile_flags_list.extend(['/Zi', '/Od'])
         extra_link_flags_list.append('/DEBUG')
     elif os.environ.get('PLAT') == 'manylinux2010_x86_64':
         extra_link_flags_list.extend(['/usr/local/lib64/libglib-2.0.a', '/usr/local/lib/libgsl.a'])
         extra_libraries = []
+    elif os.environ.get('STATIC_GSL'):
+        extra_link_flags_list.extend(['/usr/local/lib/libgsl.a'])
+    else:
+        extra_libraries.append('gsl')
     extensions = [
         Extension('pybhcd', sourcefiles,
                   include_dirs=extra_include_path,
