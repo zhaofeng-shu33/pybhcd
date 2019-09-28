@@ -61,24 +61,30 @@ def set_up_cython_extension():
         copyfile(gsl_run_time, os.path.join(os.getcwd(), gsl_run_time_name))
 
     if sys.platform == 'linux':
-        set_up_glib_include_path_linux(extra_include_path)    
+        set_up_glib_include_path_linux(extra_include_path)
+                
 
     # collect library
     sourcefiles = ['pybhcd.pyx']
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'bhcd'), exclude=['pagerank.c', 'loadgml.c', 'benchbhcd.c', 'bhcd.c', 'test.c', 'test_bitset_hash.c']))
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'hccd'), exclude=[]))
     extra_compile_flags_list = []
-    extra_link_flags_list = []    
+    extra_link_flags_list = [] 
+    extra_libraries = ['glib-2.0', 'gsl']   
     if sys.platform == 'win32' and os.environ.get('BHCD_DEBUG'): 
         extra_compile_flags_list.extend(['/Zi', '/Od'])
         extra_link_flags_list.append('/DEBUG')
+    elif os.environ.get('PLAT') == 'manylinux2010_x86_64':
+        extra_lib_dir.extend(['/usr/local/lib64'])
+        extra_link_flags_list.extend(['-Bstatic', '/usr/local/lib/libgsl.a', '-lglib-2.0'])
+        extra_libraries = []
     extensions = [
         Extension('pybhcd', sourcefiles,
                   include_dirs=extra_include_path,
                   library_dirs=extra_lib_dir,
                   extra_compile_args=extra_compile_flags_list,
                   extra_link_args=extra_link_flags_list,
-                  libraries=['glib-2.0', 'gsl']
+                  libraries=extra_libraries
                  )
     ]
     return cythonize(extensions)
@@ -106,7 +112,6 @@ if __name__ == '__main__':
           maintainer_email = '616545598@qq.com',
           long_description = long_description,
           long_description_content_type="text/markdown",          
-          install_requires = ['networkx'],
           license = 'Apache License Version 2.0',
           ext_modules=EXT_MODULE_CLASS,
           classifiers = (

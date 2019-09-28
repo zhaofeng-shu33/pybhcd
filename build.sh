@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e -x
-PLAT=manylinux2010_x86_64
+export PLAT=manylinux2010_x86_64
 PY36=/opt/python/cp36-cp36m/bin
 PY37=/opt/python/cp37-cp37m/bin
 $PY36/pip wheel . -w dist/
