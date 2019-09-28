@@ -9,7 +9,7 @@ jobs:
       - run:
          name: build
          command: ./build.sh
-      - persist_to_workspace
+      - persist_to_workspace:
          root: dist
          paths:
           - wheelhouse
