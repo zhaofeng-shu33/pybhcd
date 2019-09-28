@@ -5,6 +5,7 @@ jobs:
       - image: zhaofengshu33/bhcd-docker:v1
     steps:
       - checkout
+      - run: git submodule update --init
       - run:
          name: build
          command: ./build.sh
