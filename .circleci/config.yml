@@ -34,7 +34,7 @@ workflows:
       - deploy:
          requires:
            - build
-         filters:
-           tags:
-             only: /v.*/
+      filters:
+        tags:
+          only: /v.*/
       
