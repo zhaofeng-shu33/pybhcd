@@ -75,8 +75,7 @@ def set_up_cython_extension():
         extra_compile_flags_list.extend(['/Zi', '/Od'])
         extra_link_flags_list.append('/DEBUG')
     elif os.environ.get('PLAT') == 'manylinux2010_x86_64':
-        extra_lib_dir.extend(['/usr/local/lib64'])
-        extra_link_flags_list.extend(['-Bstatic', '/usr/local/lib/libgsl.a', '-lglib-2.0'])
+        extra_link_flags_list.extend(['/usr/local/lib64/libglib-2.0.a', '/usr/local/lib/libgsl.a'])
         extra_libraries = []
     extensions = [
         Extension('pybhcd', sourcefiles,
