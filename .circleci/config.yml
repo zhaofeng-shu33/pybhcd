@@ -24,7 +24,7 @@ jobs:
          command: sudo pip install twine
       - run:
          name: deploy to pypi
-         command: twine upload dist/wheelhouse/* -u zhaofeng-shu33
+         command: twine upload dist/wheelhouse/* -u zhaofeng-shu33 && echo "success" || echo "failed"
  
 workflows:
   version: 2
