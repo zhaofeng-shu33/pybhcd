@@ -1,0 +1,30 @@
+version: 2
+jobs:
+  build:
+    docker:
+      image: zhaofengshu33/bhcd-docker:v1
+    steps:
+      - checkout
+      - run:
+         name: build
+         command: ./build.sh
+  deploy:
+    docker:
+      image: circleci/python:3.7.3
+    steps:
+      - run:
+         name: install twine
+         command: sudo pip install twine
+      - run:
+         name: deploy to pypi
+         command: ls dist/wheelhouse
+ 
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build
+      - deploy:
+         requires:
+           - build
+      
