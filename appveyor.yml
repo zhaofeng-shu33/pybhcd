@@ -3,6 +3,8 @@ image: Visual Studio 2019
 configuration: Release
 platform: x64
 environment:
+  TWINE_PASSWORD:
+    secure: cDgJ0l9hLc0cTXODMVfjnA==
   VCPKG_ROOT: C:\Tools\vcpkg
 install:
 - cmd: >-
@@ -10,7 +12,7 @@ install:
     
     COPY .\appveyor\x64-windows-bhcd.cmake C:\Tools\vcpkg\triplets\
     
-    IF NOT EXIST "C:\Tools\vcpkg\installed\x64-windows\include\glib.h" vcpkg install glib:x64-windows-bhcd gsl:x64-windows-bhcd
+    IF NOT EXIST "C:\Tools\vcpkg\installed\x64-windows-bhcd\include\glib.h" vcpkg install glib:x64-windows-bhcd gsl:x64-windows-bhcd
     
     C:\Python36-x64\python.exe -m pip install wheel cython twine
     
@@ -23,3 +25,9 @@ build_script:
     C:\Python36-x64\python.exe -m pip wheel . -w dist --no-deps
     
     C:\Python37-x64\python.exe -m pip wheel . -w dist --no-deps
+deploy_script:
+- cmd: >-
+    
+    echo %APPVEYOR_REPO_TAG%
+    
+    IF "%APPVEYOR_REPO_TAG%"=="true" C:\Python36-x64\python.exe -m twine upload dist/* -u zhaofeng-shu33
