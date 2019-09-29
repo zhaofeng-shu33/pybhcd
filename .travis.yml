@@ -10,11 +10,19 @@ matrix:
            packages:
              - gsl
              - glib-static
-
+    - os: osx
+      osx_image: xcode10.3
+      sudo: required
+      addons:
+        homebrew:
+          taps: zhaofeng-shu33/liblemonformula
+          packages:
+            - gsl
+            - glib-static
 install:
-  - python3 -m pip install cython
+  - python3 -m pip install cython twine
 
 script:
   - export STATIC_GSL=1 && python3 setup.py bdist_wheel
-
+  - python3 -m twine upload dist/* -u zhaofeng-shu33 && echo "success" || echo "failed"
 
