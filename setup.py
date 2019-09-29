@@ -91,7 +91,8 @@ def set_up_cython_extension():
         extra_link_flags_list.extend(['/usr/local/lib/libgsl.a'])
     else:
         extra_libraries.append('gsl')
-        extra_compile_flags_list.append('-std=c99')
+        if sys.platform != 'win32':
+            extra_compile_flags_list.append('-std=c99')
     extensions = [
         Extension('pybhcd', sourcefiles,
                   include_dirs=extra_include_path,
