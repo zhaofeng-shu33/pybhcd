@@ -1,32 +1,22 @@
-matrix:
-  include:
-    - os: osx
-      osx_image: xcode9.4
-      language: python
-      python: 3.6
-      sudo: required
-      addons:
-         homebrew:
-           update: true
-           taps: zhaofeng-shu33/liblemonformula
-           packages:
-             - gsl
-             - glib-static
-    - os: osx
-      osx_image: xcode10.3
-      language: python
-      python: 3.7
-      sudo: required
-      addons:
-        homebrew:
-          taps: zhaofeng-shu33/liblemonformula
-          packages:
-            - gsl
-            - glib-static
+os: osx
+osx_image: xcode10.3
+sudo: required
+addons:
+  homebrew:
+    taps: zhaofeng-shu33/liblemonformula
+      packages:
+        - gsl
+        - glib-static
 install:
-  - python -m pip install cython twine
-
+  - brew cask install miniconda
+  - conda create --name py36 python=3.6
+  - conda create --name py37 python=3.7
+  - conda init bash
 script:
-  - export STATIC_GSL=1 && python3 setup.py bdist_wheel
-  - python -m twine upload dist/* -u zhaofeng-shu33 && echo "success" || echo "failed"
+  - conda activate py36 && pip install cython twine
+  - export STATIC_GSL=1 && python setup.py bdist_wheel
+  - conda deactivate
+  - conda activate py37 && pip install cython twine
+  - python setup.py bdist_wheel
+  - twine upload dist/* -u zhaofeng-shu33 && echo "success" || echo "failed"
 
