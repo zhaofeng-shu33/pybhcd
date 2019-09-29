@@ -9,9 +9,6 @@ addons:
       - glib-static
 install:
   - brew cask install miniconda
-  - source $(conda info --root)/etc/profile.d/conda.sh
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
   - conda create -y --name py36 python=3.6
   - conda create -y --name py37 python=3.7
 script:
