@@ -1,3 +1,5 @@
+[![Travis](https://api.travis-ci.com/zhaofeng-shu33/pybhcd.svg?branch=master)](https://travis-ci.com/zhaofeng-shu33/pybhcd)
+[![Appveyor](https://ci.appveyor.com/api/projects/status/github/zhaofeng-shu33/pybhcd?branch=master&svg=true)](https://ci.appveyor.com/project/zhaofeng-shu33/pybhcd)
 # pybhcd: Bayesian Hierarchical Community Discovery
 [![PyPI](https://img.shields.io/pypi/v/pybhcd.svg)](https://pypi.org/project/pybhcd)
 
