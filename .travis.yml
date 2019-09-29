@@ -9,8 +9,8 @@ addons:
       - glib-static
 install:
   - brew cask install miniconda
-  - conda create --name py36 python=3.6
-  - conda create --name py37 python=3.7
+  - conda create -y --name py36 python=3.6
+  - conda create -y --name py37 python=3.7
   - conda init bash
 script:
   - conda activate py36 && pip install cython twine
