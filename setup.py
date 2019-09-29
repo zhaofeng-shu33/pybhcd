@@ -80,18 +80,18 @@ def set_up_cython_extension():
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'hccd'), exclude=[]))
     extra_compile_flags_list = []
     extra_link_flags_list = [] 
-    extra_libraries = ['glib-2.0']   
     if sys.platform == 'win32' and os.environ.get('BHCD_DEBUG'): 
         extra_compile_flags_list.extend(['/Zi', '/Od'])
         extra_link_flags_list.append('/DEBUG')
-        extra_libraries.append('gsl')
+        extra_libraries = ['glib-2.0', 'gsl']
     elif os.environ.get('PLAT') == 'manylinux2010_x86_64':
         extra_link_flags_list.extend(['/usr/local/lib64/libglib-2.0.a', '/usr/local/lib/libgsl.a'])
         extra_libraries = []
-    elif os.environ.get('STATIC_GSL'):
-        extra_link_flags_list.extend(['/usr/local/lib/libgsl.a'])
+    elif os.environ.get('STATIC') and sys.platform == 'darwin':
+        extra_link_flags_list.extend(['/usr/local/lib/libglib-2.0.a', '/usr/local/lib/libgsl.a'])
+        extra_libraries = []
     else:
-        extra_libraries.append('gsl')
+        extra_libraries = ['glib-2.0', 'gsl']
         if sys.platform != 'win32':
             extra_compile_flags_list.append('-std=c99')
     extensions = [
