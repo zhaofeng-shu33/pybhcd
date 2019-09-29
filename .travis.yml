@@ -4,9 +4,9 @@ sudo: required
 addons:
   homebrew:
     taps: zhaofeng-shu33/liblemonformula
-      packages:
-        - gsl
-        - glib-static
+    packages:
+      - gsl
+      - glib-static
 install:
   - brew cask install miniconda
   - conda create --name py36 python=3.6
