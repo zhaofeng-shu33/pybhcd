@@ -63,6 +63,6 @@ cpdef bhcd(gml_py_str, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, b
     cdef gint str_size = strlen(strbuffer)
     tree_unref(root_ptr)
     g_rand_free(rng_ptr)
-    g_free(strbuffer)
     cdef bytes py_result_string = strbuffer
+    g_free(strbuffer)
     return py_result_string.decode('ascii')
