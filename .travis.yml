@@ -11,7 +11,7 @@ install:
   - brew cask install miniconda
   - conda create -y --name py36 python=3.6
   - conda create -y --name py37 python=3.7
-  - conda init bash
-  - source ~/.bash_profile
+  - source $(conda info --root)/etc/profile.d/conda.sh
+
 script:
   - ./travis/build.sh
