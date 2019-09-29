@@ -1,0 +1,17 @@
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode10.2
+      sudo: required
+      addons:
+         homebrew:
+           taps: zhaofeng-shu33/liblemonformula
+           packages:
+             - gsl
+             - glib-static
+
+install:
+  - python3 -m pip install cython
+
+script:
+  - export STATIC_GSL=1 && python3 setup.py bdist_wheel
