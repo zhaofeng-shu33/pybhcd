@@ -3,7 +3,8 @@
 from libc.string cimport strlen
 from cython.operator import address
 
-cdef extern from "bhcd/bhcd/bhcd.h":
+import anytree
+cdef extern from "glib.h":
     ctypedef char gchar
     ctypedef unsigned int guint
     ctypedef int gint
@@ -15,6 +16,20 @@ cdef extern from "bhcd/bhcd/bhcd.h":
         pass
     ctypedef struct GHashTable:
         pass
+    ctypedef struct GQueue:
+        pass
+    GRand* g_rand_new()
+    void g_rand_free(GRand* rand_)
+    void g_free(gpointer mem)
+    gpointer g_hash_table_lookup(GHashTable*, gconstpointer)
+    GQueue* g_queue_new()
+    void g_queue_push_head(GQueue*, gpointer)
+    gboolean g_queue_is_empty(GQueue*)
+    gpointer g_queue_pop_head(GQueue*)
+    void g_queue_push_tail(GQueue*, gpointer)
+    void g_queue_free(GQueue*)
+
+cdef extern from "bhcd/bhcd/bhcd.h":
     ctypedef struct Tree:
         pass
     ctypedef struct Dataset:
@@ -25,7 +40,6 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     ctypedef struct Params:
         gboolean binary_only
 
-    GRand* g_rand_new()
     void tree_io_save_string(Tree*, gchar**)
     Build * build_new(GRand *rng, Params * params, guint num_restarts, gboolean sparse)
     Dataset* dataset_new()
@@ -37,10 +51,7 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     void build_free(Build * build)
     void tree_ref(Tree * tree)
     void tree_unref(Tree * tree)
-    void g_rand_free(GRand* rand_)
-    void g_free(gpointer mem)
     gpointer dataset_label_create(Dataset*, const gchar*)
-    gpointer g_hash_table_lookup(GHashTable*, gconstpointer)
     void dataset_set(Dataset*, gpointer, gpointer, gboolean)
 
 cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binary_only=False, restarts=1, sparse=False):
@@ -53,6 +64,7 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     cdef char* node_label_c_str
     cdef gpointer src
     cdef gpointer dst
+    GQueue * qq
     nedges = len(nx_obj.edges)
     nvertices = len(nx_obj.nodes)    
     # load dataset
@@ -76,6 +88,13 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     params_unref(params_ptr)
     build_run(build_ptr)
     root_ptr = build_get_best_tree(build_ptr)
+    # build anytree instance
+    py_tree = anytree.Node("")
+    qq = g_queue_new()
+    g_queue_push_head(qq, root_ptr)
+    while (not g_queue_is_empty(qq)):
+        
+    # end build anytree instance
     tree_ref(root_ptr)
     build_free(build_ptr)
     tree_unref(root_ptr)
