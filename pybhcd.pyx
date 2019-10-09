@@ -7,16 +7,19 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     ctypedef char gchar
     ctypedef unsigned int guint
     ctypedef int gint
+    ctypedef void* gpointer
     ctypedef gint gboolean
     ctypedef double gdouble
-    ctypedef void* gpointer
-    
+    ctypedef const void* gconstpointer
     ctypedef struct GRand:
+        pass
+    ctypedef struct GHashTable:
         pass
     ctypedef struct Tree:
         pass
     ctypedef struct Dataset:
-        pass
+        GHashTable* labels
+
     ctypedef struct Build:
         pass
     ctypedef struct Params:
@@ -36,6 +39,9 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     void tree_unref(Tree * tree)
     void g_rand_free(GRand* rand_)
     void g_free(gpointer mem)
+    gpointer dataset_label_create(Dataset*, const gchar*)
+    gpointer g_hash_table_lookup(GHashTable*, gconstpointer)
+    void dataset_set(Dataset*, gpointer, gpointer, gboolean)
 
 cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binary_only=False, restarts=1, sparse=False):
     cdef GRand* rng_ptr
@@ -45,12 +51,21 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     cdef Tree* root_ptr
     cdef int nedges, nvertices
     cdef char* node_label_c_str
+    cdef gpointer src
+    cdef gpointer dst
     nedges = len(nx_obj.edges)
     nvertices = len(nx_obj.nodes)    
     # load dataset
     dataset_ptr = dataset_new()
     for n in nx_obj.nodes():
         node_label_c_str = <char*> n
+        dataset_label_create(dataset_ptr, <gchar*> node_label_c_str)
+    for u, v in nx_obj.edges():
+        node_label_c_str = <char*> u
+        src = g_hash_table_lookup(dataset_ptr.labels, node_label_c_str)
+        node_label_c_str = <char*> v
+        dst = g_hash_table_lookup(dataset_ptr.labels, node_label_c_str)
+        dataset_set(dataset_ptr, src, dst, 1)
     # end load dataset
     rng_ptr = g_rand_new()
     params_ptr = params_new(dataset_ptr, <gdouble> gamma, <gdouble> alpha, 
