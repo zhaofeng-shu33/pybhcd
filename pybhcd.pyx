@@ -1,4 +1,5 @@
 # distutils: language = c
+# cython: language_level=3
 from libc.string cimport strlen
 from cython.operator import address
 
@@ -35,7 +36,7 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     void tree_unref(Tree * tree)
     void g_rand_free(GRand* rand_)
     void g_free(gpointer mem)
-    
+
 cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binary_only=False, restarts=1, sparse=False):
     cdef GRand* rng_ptr
     cdef Params* params_ptr
@@ -43,10 +44,14 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     cdef Build* build_ptr
     cdef Tree* root_ptr
     cdef int nedges, nvertices
-    nedges = len(networkx_graph.edges)
-    nvertices = len(networkx_graph.nodes)    
+    cdef char* node_label_c_str
+    nedges = len(nx_obj.edges)
+    nvertices = len(nx_obj.nodes)    
     # load dataset
     dataset_ptr = dataset_new()
+    for n in nx_obj.nodes():
+        node_label_c_str = <char*> n
+    # end load dataset
     rng_ptr = g_rand_new()
     params_ptr = params_new(dataset_ptr, <gdouble> gamma, <gdouble> alpha, 
         <gdouble> beta, <gdouble> delta, <gdouble> _lambda)    
