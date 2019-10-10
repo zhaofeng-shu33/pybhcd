@@ -92,12 +92,15 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     # load dataset
     dataset_ptr = dataset_new()
     for n in nx_obj.nodes():
-        node_label_c_str = <char*> n
+        n_byte_str = str(n).encode('ascii')
+        node_label_c_str = <char*> n_byte_str
         dataset_label_create(dataset_ptr, <gchar*> node_label_c_str)
     for u, v in nx_obj.edges():
-        node_label_c_str = <char*> u
+        u_byte_str = str(u).encode('ascii')
+        node_label_c_str = <char*> u_byte_str
         src = g_hash_table_lookup(dataset_ptr.labels, node_label_c_str)
-        node_label_c_str = <char*> v
+        v_byte_str = str(v).encode('ascii')
+        node_label_c_str = <char*> v_byte_str
         dst = g_hash_table_lookup(dataset_ptr.labels, node_label_c_str)
         dataset_set(dataset_ptr, src, dst, 1)
     # end load dataset
