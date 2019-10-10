@@ -1,4 +1,5 @@
 import unittest
+import json
 
 import networkx as nx
 
@@ -9,9 +10,8 @@ class TestBHCD(unittest.TestCase):
         G = nx.Graph()
         G.add_edge(0,1)
         G.add_edge(2,3) 
-        gml_str = "\n".join(nx.generate_gml(G))   
-        result_str = bhcd(gml_str)
-        print(result_str)
+        result_json_obj = bhcd(G)
+        print(json.dumps(result_json_obj, indent=4))
  
 if __name__ == '__main__':
     unittest.main()
