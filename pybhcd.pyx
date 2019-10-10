@@ -39,6 +39,7 @@ cdef extern from "glib.h":
     gboolean g_hash_table_insert(GHashTable*, gpointer, gpointer)
     GHashTable* g_hash_table_new_full(GHashFunc, GEqualFunc, GDestroyNotify, GDestroyNotify)
     void g_hash_table_unref(GHashTable*)
+    gchar* g_strdup(const gchar*)
 
 cdef extern from "bhcd/bhcd/bhcd.h":
     ctypedef struct Tree:
@@ -86,6 +87,7 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     cdef Tree* tree_root_ptr
     cdef int nedges, nvertices
     cdef char* node_label_c_str
+    cdef gchar* id
     cdef GHashTable * id_labels
     cdef gpointer src
     cdef gpointer dst
@@ -106,7 +108,8 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
         n_byte_str = str(n).encode('ascii')
         node_label_c_str = <char*> n_byte_str
         label = dataset_label_create(dataset_ptr, <gchar*> node_label_c_str)
-        g_hash_table_insert(id_labels, <gchar*> node_label_c_str, label)
+        id = g_strdup(<gchar*> node_label_c_str)
+        g_hash_table_insert(id_labels, id, label)
     for u, v in nx_obj.edges():
         u_byte_str = str(u).encode('ascii')
         node_label_c_str = <char*> u_byte_str
