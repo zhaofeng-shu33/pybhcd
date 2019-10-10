@@ -12,6 +12,9 @@ cdef extern from "glib.h":
     ctypedef gint gboolean
     ctypedef double gdouble
     ctypedef const void* gconstpointer
+    ctypedef void(*GDestroyNotify)(gpointer)
+    ctypedef guint(*GHashFunc)(gconstpointer)
+    ctypedef gboolean(*GEqualFunc)(gconstpointer, gconstpointer)
     ctypedef struct GRand:
         pass
     ctypedef struct GHashTable:
@@ -31,7 +34,10 @@ cdef extern from "glib.h":
     void g_queue_push_tail(GQueue*, gpointer)
     void g_queue_free(GQueue*)
     GList* g_list_next(GList*)
-
+    guint g_str_hash(gconstpointer)
+    gboolean g_str_equal(gconstpointer, gconstpointer)
+    gboolean g_hash_table_insert(GHashTable*, gpointer, gpointer)
+    GHashTable* g_hash_table_new_full(GHashFunc, GEqualFunc, GDestroyNotify, GDestroyNotify)
 cdef extern from "bhcd/bhcd/bhcd.h":
     ctypedef struct Tree:
         pass
@@ -78,8 +84,10 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     cdef Tree* tree_root_ptr
     cdef int nedges, nvertices
     cdef char* node_label_c_str
+    cdef GHashTable * id_labels
     cdef gpointer src
     cdef gpointer dst
+    cdef gpointer label
     cdef gint next_index = -1
     cdef Pair* cur
     cdef Tree* tree_tmp_ptr
@@ -90,18 +98,20 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     nedges = len(nx_obj.edges)
     nvertices = len(nx_obj.nodes)
     # load dataset
+    id_labels = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL)
     dataset_ptr = dataset_new()
     for n in nx_obj.nodes():
         n_byte_str = str(n).encode('ascii')
         node_label_c_str = <char*> n_byte_str
-        dataset_label_create(dataset_ptr, <gchar*> node_label_c_str)
+        label = dataset_label_create(dataset_ptr, <gchar*> node_label_c_str)
+        g_hash_table_insert(id_labels, <gchar*> node_label_c_str, label)
     for u, v in nx_obj.edges():
         u_byte_str = str(u).encode('ascii')
         node_label_c_str = <char*> u_byte_str
-        src = g_hash_table_lookup(dataset_ptr.labels, node_label_c_str)
+        src = g_hash_table_lookup(id_labels, node_label_c_str)
         v_byte_str = str(v).encode('ascii')
         node_label_c_str = <char*> v_byte_str
-        dst = g_hash_table_lookup(dataset_ptr.labels, node_label_c_str)
+        dst = g_hash_table_lookup(id_labels, node_label_c_str)
         dataset_set(dataset_ptr, src, dst, 1)
     # end load dataset
     rng_ptr = g_rand_new()
@@ -114,7 +124,7 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     build_run(build_ptr)
     tree_root_ptr = build_get_best_tree(build_ptr)
     # build json instance
-    json_root = {}
+    json_root = {"fit":{}}
     json_root["fit"]["logprob"] = tree_get_logprob(tree_root_ptr)
     tree_list = []
     qq = g_queue_new()
@@ -124,12 +134,13 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
         cur = <Pair*> g_queue_pop_head(qq)
         parent_index = GPOINTER_TO_INT(cur.fst)
         tree_tmp_ptr = <Tree*> cur.snd
-        if (tree_is_leaf(tree_root_ptr)):
+        if (tree_is_leaf(tree_tmp_ptr)):
             tree_item_property = {}
             tree_item_property["logProb"] = tree_get_logprob(tree_tmp_ptr)
             tree_item_property["logresp"] = tree_get_logresponse(tree_tmp_ptr)
             tree_item_property["parent"] = parent_index
-            tree_item_property["label"] = dataset_label_to_string(dataset_ptr, leaf_get_label(tree_tmp_ptr))
+            py_byte_str = dataset_label_to_string(dataset_ptr, leaf_get_label(tree_tmp_ptr))
+            tree_item_property["label"] = py_byte_str.decode('ascii')
             tree_list.append({"leaf":tree_item_property})
         else:
             if (parent_index == -1):
@@ -143,7 +154,7 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
                 tree_item_property["logProb"] = tree_get_logprob(tree_tmp_ptr)
                 tree_item_property["logresp"] = tree_get_logresponse(tree_tmp_ptr)
                 tree_item_property["parent"] = parent_index
-                tree_item_property["child"] = next_index                
+                tree_item_property["child"] = next_index
                 tree_list.append({"root":tree_item_property})
             child = branch_get_children(tree_tmp_ptr)
             while (child != NULL):
@@ -151,10 +162,11 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
                 child = g_list_next(child)
             next_index += 1
         pair_free(cur)
-    g_queue_free(qq)      
+    g_queue_free(qq)
     json_root["tree"] = tree_list
     # end json instance
     tree_ref(tree_root_ptr)
     build_free(build_ptr)
     tree_unref(tree_root_ptr)
     g_rand_free(rng_ptr)
+    return json_root
