@@ -21,7 +21,7 @@ jobs:
       - attach_workspace:
           at: dist
       - run: pip install --user networkx
-      - run: pip install ./dist/wheelhouse/*cp37m-manylinux2010_x86_64.whl
+      - run: pip install --user ./dist/wheelhouse/*cp37m-manylinux2010_x86_64.whl
       - run: python test_newapi.py
           
   deploy:
