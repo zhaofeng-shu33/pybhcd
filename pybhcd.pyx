@@ -3,7 +3,7 @@
 from libc.string cimport strlen
 from cython.operator import address
 
-import anytree
+
 cdef extern from "glib.h":
     ctypedef char gchar
     ctypedef unsigned int guint
@@ -39,6 +39,9 @@ cdef extern from "bhcd/bhcd/bhcd.h":
         pass
     ctypedef struct Params:
         gboolean binary_only
+    ctypedef struct Pair:
+        gpointer fst
+        gpointer snd
 
     void tree_io_save_string(Tree*, gchar**)
     Build * build_new(GRand *rng, Params * params, guint num_restarts, gboolean sparse)
@@ -53,20 +56,33 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     void tree_unref(Tree * tree)
     gpointer dataset_label_create(Dataset*, const gchar*)
     void dataset_set(Dataset*, gpointer, gpointer, gboolean)
-
+    Pair* pair_new(gpointer, gpointer)
+    gpointer GINT_TO_POINTER(gint)
+    gint GPOINTER_TO_INT(gpointer)
+    gdouble tree_get_logprob(Tree*)
+    gdouble tree_get_logresponse(Tree*)
+    gboolean tree_is_leaf(Tree*)
+    const gchar* dataset_label_to_string(Dataset*, gconstpointer)
+    gconstpointer leaf_get_label(Tree*)
+    
 cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binary_only=False, restarts=1, sparse=False):
     cdef GRand* rng_ptr
     cdef Params* params_ptr
     cdef Dataset* dataset_ptr
     cdef Build* build_ptr
-    cdef Tree* root_ptr
+    cdef Tree* tree_root_ptr
     cdef int nedges, nvertices
     cdef char* node_label_c_str
     cdef gpointer src
     cdef gpointer dst
-    GQueue * qq
+    cdef gint next_index = -1
+    cdef Pair* cur
+    cdef Tree* tree_tmp_ptr
+    cdef gint parent_index
+    cdef GQueue * qq
+    
     nedges = len(nx_obj.edges)
-    nvertices = len(nx_obj.nodes)    
+    nvertices = len(nx_obj.nodes)
     # load dataset
     dataset_ptr = dataset_new()
     for n in nx_obj.nodes():
@@ -87,15 +103,28 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     build_set_verbose(build_ptr, 0)
     params_unref(params_ptr)
     build_run(build_ptr)
-    root_ptr = build_get_best_tree(build_ptr)
-    # build anytree instance
-    py_tree = anytree.Node("")
+    tree_root_ptr = build_get_best_tree(build_ptr)
+    # build json instance
+    json_root = {}
+    json_root["fit"]["logprob"] = tree_get_logprob(tree_root_ptr)
+    tree_list = []
     qq = g_queue_new()
-    g_queue_push_head(qq, root_ptr)
+    g_queue_push_head(qq, pair_new(GINT_TO_POINTER(next_index), tree_root_ptr))
+    next_index += 1
     while (not g_queue_is_empty(qq)):
-        
-    # end build anytree instance
-    tree_ref(root_ptr)
+        cur = <Pair*> g_queue_pop_head(qq)
+        parent_index = GPOINTER_TO_INT(cur.fst)
+        tree_tmp_ptr = <Tree*> cur.snd
+        if (tree_is_leaf(tree_root_ptr)):
+            tree_item_property = {}
+            tree_item_property["logProb"] = tree_get_logprob(tree_tmp_ptr)
+            tree_item_property["logresp"] = tree_get_logresponse(tree_tmp_ptr)
+            tree_item_property["parent"] = parent_index
+            tree_item_property["label"] = dataset_label_to_string(dataset_ptr, leaf_get_label(tree_tmp_ptr))
+            tree_list.append({"leaf":tree_item_property})
+    json_root["tree"] = tree_list
+    # end json instance
+    tree_ref(tree_root_ptr)
     build_free(build_ptr)
-    tree_unref(root_ptr)
+    tree_unref(tree_root_ptr)
     g_rand_free(rng_ptr)
