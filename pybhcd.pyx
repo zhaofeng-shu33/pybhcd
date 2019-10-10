@@ -155,7 +155,7 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
                 tree_item_property["logresp"] = tree_get_logresponse(tree_tmp_ptr)
                 tree_item_property["parent"] = parent_index
                 tree_item_property["child"] = next_index
-                tree_list.append({"root":tree_item_property})
+                tree_list.append({"stem":tree_item_property})
             child = branch_get_children(tree_tmp_ptr)
             while (child != NULL):
                 g_queue_push_tail(qq, pair_new(GINT_TO_POINTER(next_index), child.data))
