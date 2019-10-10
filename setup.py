@@ -33,7 +33,10 @@ def find_all_c(given_dir, exclude=[]):
 def set_up_glib_include_path_linux(extra_include_path):
     GLIB_ROOT = os.environ.get('GLIB_ROOT', '/usr/')
     glib_platform_indepedent_include_path = os.path.join(GLIB_ROOT, 'include', 'glib-2.0')
-    glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib64', 'glib-2.0', 'include')
+    if platform.platform().find('centos') > 0:
+        glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib64', 'glib-2.0', 'include')
+    else:
+        glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib', 'x86_64-linux-gnu', 'glib-2.0', 'include')
     extra_include_path.append(glib_platform_indepedent_include_path)
     extra_include_path.append(glib_platform_depedent_include_path)
 
@@ -91,7 +94,10 @@ def set_up_cython_extension():
         extra_link_flags_list.extend(['/usr/local/lib/libglib-2.0.a', '/usr/local/lib/libgsl.a'])
         extra_libraries = []
     else:
-        extra_libraries = ['glib-2.0', 'gsl']
+        if platform.platform().find('debian') >= 0:
+            extra_libraries = ['glib-2.0', 'gsl', 'gslcblas']
+        else:
+            extra_libraries = ['glib-2.0', 'gsl', 'gslcblas']
         if sys.platform != 'win32':
             extra_compile_flags_list.append('-std=c99')
     extensions = [
