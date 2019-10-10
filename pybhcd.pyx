@@ -18,6 +18,8 @@ cdef extern from "glib.h":
         pass
     ctypedef struct GQueue:
         pass
+    ctypedef struct GList:
+        gpointer data
     GRand* g_rand_new()
     void g_rand_free(GRand* rand_)
     void g_free(gpointer mem)
@@ -28,6 +30,7 @@ cdef extern from "glib.h":
     gpointer g_queue_pop_head(GQueue*)
     void g_queue_push_tail(GQueue*, gpointer)
     void g_queue_free(GQueue*)
+    GList* g_list_next(GList*)
 
 cdef extern from "bhcd/bhcd/bhcd.h":
     ctypedef struct Tree:
@@ -64,6 +67,8 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     gboolean tree_is_leaf(Tree*)
     const gchar* dataset_label_to_string(Dataset*, gconstpointer)
     gconstpointer leaf_get_label(Tree*)
+    void pair_free(Pair*)
+    GList* branch_get_children(Tree*)
     
 cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binary_only=False, restarts=1, sparse=False):
     cdef GRand* rng_ptr
@@ -80,7 +85,8 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     cdef Tree* tree_tmp_ptr
     cdef gint parent_index
     cdef GQueue * qq
-    
+    cdef GList * child
+
     nedges = len(nx_obj.edges)
     nvertices = len(nx_obj.nodes)
     # load dataset
@@ -122,6 +128,27 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
             tree_item_property["parent"] = parent_index
             tree_item_property["label"] = dataset_label_to_string(dataset_ptr, leaf_get_label(tree_tmp_ptr))
             tree_list.append({"leaf":tree_item_property})
+        else:
+            if (parent_index == -1):
+                tree_item_property = {}
+                tree_item_property["logProb"] = tree_get_logprob(tree_tmp_ptr)
+                tree_item_property["logresp"] = tree_get_logresponse(tree_tmp_ptr)
+                tree_item_property["id"] = next_index
+                tree_list.append({"root":tree_item_property})
+            else:
+                tree_item_property = {}
+                tree_item_property["logProb"] = tree_get_logprob(tree_tmp_ptr)
+                tree_item_property["logresp"] = tree_get_logresponse(tree_tmp_ptr)
+                tree_item_property["parent"] = parent_index
+                tree_item_property["child"] = next_index                
+                tree_list.append({"root":tree_item_property})
+            child = branch_get_children(tree_tmp_ptr)
+            while (child != NULL):
+                g_queue_push_tail(qq, pair_new(GINT_TO_POINTER(next_index), child.data))
+                child = g_list_next(child)
+            next_index += 1
+        pair_free(cur)
+    g_queue_free(qq)      
     json_root["tree"] = tree_list
     # end json instance
     tree_ref(tree_root_ptr)
