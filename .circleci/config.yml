@@ -17,6 +17,7 @@ jobs:
     docker:
       - image: circleci/python:3.7.3
     steps:
+      - checkout
       - attach_workspace:
           at: dist
       - run: pip install --user networkx
@@ -41,7 +42,7 @@ workflows:
   build-deploy:
     jobs:
       - build
-      - test
+      - test:
           requires:
             - build
       - deploy:
