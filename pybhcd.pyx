@@ -38,6 +38,8 @@ cdef extern from "glib.h":
     gboolean g_str_equal(gconstpointer, gconstpointer)
     gboolean g_hash_table_insert(GHashTable*, gpointer, gpointer)
     GHashTable* g_hash_table_new_full(GHashFunc, GEqualFunc, GDestroyNotify, GDestroyNotify)
+    void g_hash_table_unref(GHashTable*)
+
 cdef extern from "bhcd/bhcd/bhcd.h":
     ctypedef struct Tree:
         pass
@@ -113,6 +115,7 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
         node_label_c_str = <char*> v_byte_str
         dst = g_hash_table_lookup(id_labels, node_label_c_str)
         dataset_set(dataset_ptr, src, dst, 1)
+    g_hash_table_unref(id_labels)
     # end load dataset
     rng_ptr = g_rand_new()
     params_ptr = params_new(dataset_ptr, <gdouble> gamma, <gdouble> alpha, 
