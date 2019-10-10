@@ -13,6 +13,16 @@ jobs:
          root: dist
          paths:
           - wheelhouse
+  test:
+    docker:
+      - image: circleci/python:3.7.3
+    steps:
+      - attach_workspace:
+          at: dist
+      - run: pip install --user networkx
+      - run: pip install ./dist/wheelhouse/*cp37m-manylinux2010_x86_64.whl
+      - run: python test_newapi.py
+          
   deploy:
     docker:
       - image: circleci/python:3.7.3
@@ -31,6 +41,9 @@ workflows:
   build-deploy:
     jobs:
       - build
+      - test
+          requires:
+            - build
       - deploy:
           requires:
             - build
