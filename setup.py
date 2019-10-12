@@ -1,5 +1,6 @@
 import os
 import sys
+import platform
 from setuptools import setup, Extension
 from subprocess import Popen, PIPE
 from shutil import copyfile
