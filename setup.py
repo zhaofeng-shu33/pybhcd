@@ -84,21 +84,23 @@ def set_up_cython_extension():
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'hccd'), exclude=[]))
     extra_compile_flags_list = []
     extra_link_flags_list = [] 
-    if sys.platform == 'win32' and os.environ.get('BHCD_DEBUG'): 
-        extra_compile_flags_list.extend(['/Zi', '/Od'])
-        extra_link_flags_list.append('/DEBUG')
-        extra_libraries = ['glib-2.0', 'gsl']
-    elif os.environ.get('PLAT') == 'manylinux2010_x86_64':
+    if os.environ.get('BHCD_DEBUG'):
+        if sys.platform == 'win32': 
+            extra_compile_flags_list.extend(['/Zi', '/Od'])
+            extra_link_flags_list.append('/DEBUG')
+        else:
+            extra_compile_flags_list.extend(['-g', '-O0', '-UNDEBUG'])
+    extra_libraries = ['glib-2.0', 'gsl']
+
+    if os.environ.get('PLAT') == 'manylinux2010_x86_64':
         extra_link_flags_list.extend(['/usr/local/lib64/libglib-2.0.a', '/usr/local/lib/libgsl.a'])
         extra_libraries = []
-    elif os.environ.get('STATIC') and sys.platform == 'darwin':
+    if os.environ.get('STATIC') and sys.platform == 'darwin':
         extra_link_flags_list.extend(['/usr/local/lib/libglib-2.0.a', '/usr/local/lib/libgsl.a'])
         extra_libraries = []
     else:
         if platform.platform().find('debian') >= 0:
-            extra_libraries = ['glib-2.0', 'gsl', 'gslcblas']
-        else:
-            extra_libraries = ['glib-2.0', 'gsl', 'gslcblas']
+            extra_libraries.append('gslcblas')
         if sys.platform != 'win32':
             extra_compile_flags_list.append('-std=c99')
     extensions = [
