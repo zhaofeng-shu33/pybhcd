@@ -32,7 +32,10 @@ def find_all_c(given_dir, exclude=[]):
     return c_file_list
 
 def set_up_glib_include_path_linux(extra_include_path):
-    GLIB_ROOT = os.environ.get('GLIB_ROOT', '/usr/')
+    if os.environ.get('PLAT') == 'manylinux2010_x86_64':
+        GLIB_ROOT = '/usr/local/'
+    else:
+        GLIB_ROOT = os.environ.get('GLIB_ROOT', '/usr/')
     glib_platform_indepedent_include_path = os.path.join(GLIB_ROOT, 'include', 'glib-2.0')
     if platform.platform().find('centos') > 0:
         glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib64', 'glib-2.0', 'include')
