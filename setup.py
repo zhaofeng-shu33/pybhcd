@@ -131,7 +131,7 @@ if __name__ == '__main__':
     EXT_MODULE_CLASS = set_up_cython_extension()
     setup(name = 'pybhcd',
           data_files = data_file_list,
-          version = '0.3',
+          version = '0.3.post1',
           description = 'Bayesian Hierarchical Community Discovery',
           author = 'blundellc, zhaofeng-shu33',
           author_email = '616545598@qq.com',
