@@ -12,6 +12,6 @@ class TestBHCD(unittest.TestCase):
         G.add_edge(2,3) 
         result_json_obj = bhcd(G)
         print(json.dumps(result_json_obj, indent=4))
- 
+
 if __name__ == '__main__':
     unittest.main()
