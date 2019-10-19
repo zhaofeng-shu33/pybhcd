@@ -1,5 +1,6 @@
 import os
 import sys
+import platform
 from setuptools import setup, Extension
 from subprocess import Popen, PIPE
 from shutil import copyfile
@@ -31,9 +32,15 @@ def find_all_c(given_dir, exclude=[]):
     return c_file_list
 
 def set_up_glib_include_path_linux(extra_include_path):
-    GLIB_ROOT = os.environ.get('GLIB_ROOT', '/usr/')
+    if os.environ.get('PLAT') == 'manylinux2010_x86_64':
+        GLIB_ROOT = '/usr/local/'
+    else:
+        GLIB_ROOT = os.environ.get('GLIB_ROOT', '/usr/')
     glib_platform_indepedent_include_path = os.path.join(GLIB_ROOT, 'include', 'glib-2.0')
-    glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib64', 'glib-2.0', 'include')
+    if platform.platform().find('centos') > 0:
+        glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib64', 'glib-2.0', 'include')
+    else:
+        glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib', 'x86_64-linux-gnu', 'glib-2.0', 'include')
     extra_include_path.append(glib_platform_indepedent_include_path)
     extra_include_path.append(glib_platform_depedent_include_path)
 
@@ -80,18 +87,23 @@ def set_up_cython_extension():
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'hccd'), exclude=[]))
     extra_compile_flags_list = []
     extra_link_flags_list = [] 
-    if sys.platform == 'win32' and os.environ.get('BHCD_DEBUG'): 
-        extra_compile_flags_list.extend(['/Zi', '/Od'])
-        extra_link_flags_list.append('/DEBUG')
-        extra_libraries = ['glib-2.0', 'gsl']
-    elif os.environ.get('PLAT') == 'manylinux2010_x86_64':
+    if os.environ.get('BHCD_DEBUG'):
+        if sys.platform == 'win32': 
+            extra_compile_flags_list.extend(['/Zi', '/Od'])
+            extra_link_flags_list.append('/DEBUG')
+        else:
+            extra_compile_flags_list.extend(['-g', '-O0', '-UNDEBUG'])
+    extra_libraries = ['glib-2.0', 'gsl']
+
+    if os.environ.get('PLAT') == 'manylinux2010_x86_64':
         extra_link_flags_list.extend(['/usr/local/lib64/libglib-2.0.a', '/usr/local/lib/libgsl.a'])
         extra_libraries = []
-    elif os.environ.get('STATIC') and sys.platform == 'darwin':
+    if os.environ.get('STATIC') and sys.platform == 'darwin':
         extra_link_flags_list.extend(['/usr/local/lib/libglib-2.0.a', '/usr/local/lib/libgsl.a'])
         extra_libraries = []
     else:
-        extra_libraries = ['glib-2.0', 'gsl']
+        if platform.platform().find('debian') >= 0:
+            extra_libraries.append('gslcblas')
         if sys.platform != 'win32':
             extra_compile_flags_list.append('-std=c99')
     extensions = [
@@ -119,7 +131,7 @@ if __name__ == '__main__':
     EXT_MODULE_CLASS = set_up_cython_extension()
     setup(name = 'pybhcd',
           data_files = data_file_list,
-          version = '0.3',
+          version = '0.3.post1',
           description = 'Bayesian Hierarchical Community Discovery',
           author = 'blundellc, zhaofeng-shu33',
           author_email = '616545598@qq.com',
