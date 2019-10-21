@@ -142,8 +142,8 @@ cdef get_edge_prediction(num_nodes, Tree* tree_root_ptr):
         edges.append([py_byte_str_1.decode('ascii'),
                       py_byte_str_2.decode('ascii'),
                       py_boolean,
-                      logpred_true,
-                      logpred_false])
+                      logpred_false,
+                      logpred_true])
     dataset_unref(dataset_ptr)
     return edges
 
@@ -175,7 +175,7 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     json_root = {"fit":{}}
     json_root["fit"]["logprob"] = tree_get_logprob(tree_root_ptr)
     if predict:
-        json_root["fit"]["edge"] = get_edge_prediction(len(nx_obj.edges), tree_root_ptr)
+        json_root["fit"]["edge"] = get_edge_prediction(len(nx_obj.nodes), tree_root_ptr)
     
     tree_list = []
     qq = g_queue_new()
