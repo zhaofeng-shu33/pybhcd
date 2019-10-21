@@ -54,7 +54,8 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     ctypedef struct Pair:
         gpointer fst
         gpointer snd
-
+    ctypedef struct DatasetPairIter:
+        pass
     void tree_io_save_string(Tree*, gchar**)
     Build * build_new(GRand *rng, Params * params, guint num_restarts, gboolean sparse)
     Dataset* dataset_new()
@@ -78,7 +79,33 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     gconstpointer leaf_get_label(Tree*)
     void pair_free(Pair*)
     GList* branch_get_children(Tree*)
+    void dataset_label_pairs_iter_init(Dataset*, DatasetPairIter*)
+    gboolean dataset_label_pairs_iter_next(DatasetPairIter*, gpointer*, gpointer*)
+    gdouble tree_logpredict(Tree*, gconstpointer, gconstpointer, gboolean)
+    gboolean dataset_get(Dataset*, gconstpointer, gconstpointer, gboolean*)
     
+cdef get_edge_prediction(Dataset* dataset_ptr, Tree* tree_root_ptr):
+    cdef DatasetPairIter pairs
+    cdef gpointer src = NULL
+    cdef gpointer dst = NULL
+    cdef gboolean value, missing
+    cdef gdouble logpred_true, logpred_false
+    dataset_label_pairs_iter_init(dataset_ptr, &pairs)
+    edges = []
+    while dataset_label_pairs_iter_next(&pairs, &src, &dst):
+        value = dataset_get(dataset_ptr, src, dst, &missing)
+        logpred_true = tree_logpredict(tree_root_ptr, src, dst, 1)
+        logpred_false = tree_logpredict(tree_root_ptr, src, dst, 0)
+        py_byte_str_1 = dataset_label_to_string(dataset_ptr, src)
+        py_byte_str_2 = dataset_label_to_string(dataset_ptr, dst)
+        py_boolean = value > 0
+        edges.append([py_byte_str_1.decode('ascii'),
+                      py_byte_str_2.decode('ascii'),
+                      py_boolean,
+                      logpred_true,
+                      logpred_false])
+    return edges
+
 cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binary_only=False, restarts=1, sparse=False):
     cdef GRand* rng_ptr
     cdef Params* params_ptr
@@ -132,6 +159,8 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     # build json instance
     json_root = {"fit":{}}
     json_root["fit"]["logprob"] = tree_get_logprob(tree_root_ptr)
+    json_root["fit"]["edge"] = get_edge_prediction(dataset_ptr, tree_root_ptr)
+    
     tree_list = []
     qq = g_queue_new()
     g_queue_push_head(qq, pair_new(GINT_TO_POINTER(next_index), tree_root_ptr))
