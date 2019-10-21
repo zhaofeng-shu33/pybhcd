@@ -8,8 +8,10 @@
 
 An efficient Bayesian nonparametric model for discovering hierarchical community structure in social networks. 
 
+This repository is a Python-binding of [bhcd](https://github.com/zhaofeng-shu33/bhcd).
+
 ## Parameter Tuning
-There are five parameters (alpha, beta, lambda, delta, gamma) to be tuned, lines within interval (0,1) and satisifies the following
+There are five parameters (alpha, beta, lambda, delta, gamma) to be tuned, lines within interval (0,1) and satisfies the following
 constraint.
 
 alpha > beta
