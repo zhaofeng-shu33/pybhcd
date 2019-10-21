@@ -10,7 +10,7 @@ class TestBHCD(unittest.TestCase):
         G = nx.Graph()
         G.add_edge(0,1)
         G.add_edge(2,3) 
-        result_json_obj = bhcd(G)
+        result_json_obj = bhcd(G, predict=True)
         print(json.dumps(result_json_obj, indent=4))
 
 if __name__ == '__main__':

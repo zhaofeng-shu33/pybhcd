@@ -86,7 +86,8 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     gboolean dataset_get(Dataset*, gconstpointer, gconstpointer, gboolean*)
     void dataset_unref(Dataset*)
 
-cdef void construct_dataset_from_networkx_graph(nx_obj, Dataset* dataset_ptr):
+cdef Dataset* construct_dataset_from_networkx_graph(nx_obj):
+    cdef Dataset* dataset_ptr
     cdef GHashTable * id_labels
     cdef char* node_label_c_str
     cdef gpointer label
@@ -115,9 +116,10 @@ cdef void construct_dataset_from_networkx_graph(nx_obj, Dataset* dataset_ptr):
         dataset_set(dataset_ptr, src, dst, 1)
     g_hash_table_unref(id_labels)
     # end load dataset
-    
+    return dataset_ptr
+
 cdef get_edge_prediction(num_nodes, Tree* tree_root_ptr):
-    cdef Dataset* dataset_ptr = NULL
+    cdef Dataset* dataset_ptr
     cdef DatasetPairIter pairs
     cdef gpointer src = NULL
     cdef gpointer dst = NULL
@@ -127,7 +129,7 @@ cdef get_edge_prediction(num_nodes, Tree* tree_root_ptr):
     for i in range(num_nodes):
         for j in range(i+1, num_nodes):
             nx_obj.add_edge(i, j)
-    construct_dataset_from_networkx_graph(nx_obj, dataset_ptr)
+    dataset_ptr = construct_dataset_from_networkx_graph(nx_obj)
     dataset_label_pairs_iter_init(dataset_ptr, &pairs)
     edges = []
     while dataset_label_pairs_iter_next(&pairs, &src, &dst):
@@ -148,7 +150,7 @@ cdef get_edge_prediction(num_nodes, Tree* tree_root_ptr):
 cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binary_only=False, restarts=1, sparse=False, predict=False):
     cdef GRand* rng_ptr
     cdef Params* params_ptr
-    cdef Dataset* dataset_ptr = NULL
+    cdef Dataset* dataset_ptr
     cdef Build* build_ptr
     cdef Tree* tree_root_ptr
     cdef int nedges, nvertices  
@@ -159,7 +161,7 @@ cpdef bhcd(nx_obj, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binar
     cdef GQueue * qq
     cdef GList * child
 
-    construct_dataset_from_networkx_graph(nx_obj, dataset_ptr)
+    dataset_ptr = construct_dataset_from_networkx_graph(nx_obj)
     rng_ptr = g_rand_new()
     params_ptr = params_new(dataset_ptr, <gdouble> gamma, <gdouble> alpha, 
         <gdouble> beta, <gdouble> delta, <gdouble> _lambda)    
